@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data.json site/photos.json scripts/fotos/res.json
+          git add site/data.json site/photos.json site/status.json scripts/fotos/res.json
           git diff --cached --quiet || (git commit -m "Atualização automática dos dados" && git push)
 
   publicar:

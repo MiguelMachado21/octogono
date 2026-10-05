@@ -234,13 +234,18 @@ def main():
     try:
         upcoming = fetch_upcoming({f["id"] for f in fl})
         print(f"{len(upcoming)} próximos eventos")
+        agenda = {"ok": True, "eventos": len(upcoming)}
     except Exception as e:  # sem acesso ao ufcstats.com: mantém o que já existia
         print("próximos eventos indisponíveis:", e)
+        agenda = {"ok": False, "erro": str(e)[:300]}
         upcoming = json.loads(OUT.read_text(encoding="utf-8")).get("upcoming", []) if OUT.exists() else []
     today = datetime.now().date().isoformat()
     upcoming = [e for e in upcoming if (e["date"] or "9999") >= today]
     data = {"updated": events[0]["date"] if events else None, "events": events, "fights": fights, "fighters": fl,
             "upcoming": upcoming}
+    status = {"gerado_em": datetime.now().isoformat(timespec="seconds"), "ultimo_evento": data["updated"],
+              "lutas": len(fights), "agenda": agenda}
+    OUT.with_name("status.json").write_text(json.dumps(status, ensure_ascii=False, indent=1), encoding="utf-8")
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     dup = sum(1 for v in by_name.values() if len(v) > 1)
     print(f"{len(events)} eventos, {len(fights)} lutas, {len(fl)} lutadores, {dup} nomes repetidos, "
