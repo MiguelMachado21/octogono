@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Estatísticas, perfis, lutas, divisões e agenda do UFC.">
+<title>Octógono em Números</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700;1,800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: estilo transmissão do UFC. Fundo preto, faixas vermelhas, números grandes em condensado itálico; dourado só para cinturão e barras; cantos vermelho/azul nas comparações. Visual escuro de propósito (tema único). */
+:root {
+  color-scheme: dark;
+  --bg: #0b0b0c;
+  --panel: #161618;
+  --panel-2: #1f1f22;
+  --fg: #f5f5f4;
+  --muted: #a1a1a6;
+  --line: #2a2a2e;
+  --ufc-red: #d20a0a;     /* vermelho da marca, em faixas e botões */
+  --accent: #c9a24a;      /* dourado do cinturão */
+  --red: #e8383b;         /* canto vermelho (gráficos) */
+  --blue: #3d8bf0;        /* canto azul (gráficos) */
+  --win: #2fa36b;
+  --loss: #e8383b;
+  --neutral: #6e6e74;
+  --bar-track: #26262a;
+  --c1: #3987e5;          /* série 1 (gráficos) */
+  --c2: #d95926;          /* série 2 */
+  --c3: #199e70;          /* série 3 */
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--body); margin: 0 }
+a { color: inherit }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: #000; border-top: 4px solid var(--ufc-red); border-bottom: 1px solid var(--line) }
+header.top .wrap { padding-block: 10px; display: flex; gap: 14px 20px; align-items: center; flex-wrap: wrap }
+.brand { font: italic 800 1.5rem/1 var(--display); letter-spacing: .01em; text-transform: uppercase; text-decoration: none; white-space: nowrap; display: flex; align-items: center; gap: 8px }
+.brand b { background: var(--ufc-red); color: #fff; padding: 3px 8px 2px; transform: skewX(-12deg); display: inline-block }
+.brand b span { display: inline-block; transform: skewX(12deg) }
+nav.links { display: flex; gap: 18px; font: 700 1rem var(--display); text-transform: uppercase; letter-spacing: .08em }
+nav.links a { text-decoration: none; color: var(--muted); padding-block: 4px; border-bottom: 2px solid transparent }
+nav.links a.on { color: var(--fg); border-color: var(--ufc-red) }
+.searchbox { position: relative; flex: 1 1 220px; min-width: 0 }
+.searchbox input { width: 100%; font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--panel); color: var(--fg) }
+.searchbox input::placeholder { color: var(--muted) }
+.results { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 32px rgb(0 0 0 / .6); max-height: 60vh; overflow: auto }
+.results a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; text-decoration: none; border-bottom: 1px solid var(--line) }
+.results a > span:nth-child(2) { flex: 1; min-width: 0 }
+.results a:last-child { border-bottom: 0 }
+.results a:hover, .results a.sel { background: var(--panel-2) }
+.results small { color: var(--muted); white-space: nowrap }
+
+/* foto ou iniciais */
+.avatar { flex: none; width: var(--s, 36px); height: var(--s, 36px); border-radius: 50%; background: linear-gradient(160deg, #2c2c31, #151517); border: 2px solid var(--line); display: grid; place-items: center; overflow: hidden; font: italic 800 calc(var(--s, 36px) * .38)/1 var(--display); color: var(--muted); letter-spacing: .02em }
+.avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top }
+.avatar.r { border-color: var(--red) } .avatar.b { border-color: var(--blue) }
+
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(2.4rem, 8vw, 4rem); line-height: .95; font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: -.005em }
+h2 { font-size: 1.35rem; font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: .03em; margin-block: 36px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-left: 12px; border-left: 4px solid var(--ufc-red) }
+h2 small { font: 400 .85rem var(--body); text-transform: none; letter-spacing: 0; color: var(--muted) }
+h2 a { color: var(--muted) }
+.eyebrow { font: 700 .8rem var(--display); text-transform: uppercase; letter-spacing: .14em; color: var(--muted) }
+.eyebrow.gold { color: var(--accent) }
+.muted { color: var(--muted) }
+.num { font-variant-numeric: tabular-nums }
+section.page { padding-top: 24px }
+
+/* topo de perfil e de página */
+.hero { position: relative; margin-inline: -16px; padding: 28px 16px 24px; background: linear-gradient(115deg, #1a0405 0%, #0b0b0c 55%), var(--bg); border-bottom: 1px solid var(--line); overflow: hidden }
+.hero::after { content: ""; position: absolute; right: -60px; top: 0; bottom: 0; width: 220px; background: var(--ufc-red); transform: skewX(-18deg); opacity: .14; pointer-events: none }
+.hero-row { position: relative; z-index: 1; display: flex; gap: 20px; align-items: center; flex-wrap: wrap }
+.hero-row > div { min-width: 0; flex: 1 1 260px }
+.nick { font: italic 600 1.15rem var(--display); color: var(--accent); margin-top: 4px }
+.record { font: italic 800 clamp(2.6rem, 10vw, 4rem)/1 var(--display); font-variant-numeric: tabular-nums; margin-top: 10px }
+.record small { font-size: .38em; color: var(--muted); font-weight: 700; margin-left: 8px; letter-spacing: .1em; text-transform: uppercase; font-style: normal }
+.facts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 18px }
+.facts div { background: var(--panel); padding: 10px 12px }
+.facts dt { font: 700 .72rem var(--display); text-transform: uppercase; letter-spacing: .14em; color: var(--muted) }
+.facts dd { margin: 2px 0 0; font: 700 1.1rem var(--display); font-variant-numeric: tabular-nums }
+
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line) }
+.tile { background: var(--panel); padding: 14px }
+.tile b { display: block; font: italic 800 2.2rem/1 var(--display); font-variant-numeric: tabular-nums }
+.tile span { font-size: .85rem; color: var(--muted) }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 32px }
+.cols > div { min-width: 0 }
+
+/* barras horizontais de série única */
+.bars { display: grid; gap: 9px }
+.bar { display: grid; grid-template-columns: 8em 1fr 4.5em; gap: 10px; align-items: center; font-size: .95rem }
+.bar > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bar .track { height: 10px; background: var(--bar-track); position: relative }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px }
+.bar .v { text-align: right; font: 700 1.05rem var(--display); font-variant-numeric: tabular-nums }
+.bar a { text-decoration: none }
+.bar a:hover { text-decoration: underline }
+
+/* histórico V/D */
+.streak { display: flex; flex-wrap: wrap; gap: 3px }
+.streak a { width: 24px; height: 24px; display: grid; place-items: center; font: 800 .78rem var(--display); color: #fff; text-decoration: none }
+.r-V { background: var(--win) } .r-D { background: var(--loss) } .r-E, .r-SR { background: var(--neutral) }
+
+/* tabelas */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: .95rem }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle }
+th { font: 700 .75rem var(--display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); white-space: nowrap; background: #000 }
+tr:last-child td { border-bottom: 0 }
+tbody tr:hover { background: var(--panel-2) }
+td a { text-decoration: none } td a:hover { text-decoration: underline }
+.pill { display: inline-block; min-width: 2.2em; text-align: center; padding: 2px 6px; font: 800 .8rem var(--display); color: #fff; text-decoration: none }
+.belt { display: inline-block; font: 700 .68rem var(--display); letter-spacing: .1em; text-transform: uppercase; color: #000; background: var(--accent); padding: 1px 5px; margin-left: 6px; vertical-align: 2px }
+
+/* lista de eventos */
+.evlist { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line) }
+.evlist a { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--panel); padding: 12px 14px; text-decoration: none }
+.evlist a:hover { background: var(--panel-2) }
+.evlist a > span:first-child { min-width: 0 }
+.evlist b { font: italic 800 1.15rem/1.15 var(--display); text-transform: uppercase; letter-spacing: .01em }
+.evlist .date { font: 700 .85rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; text-align: right }
+
+/* canto vermelho x canto azul */
+.corners { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 18px }
+.corner { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; min-width: 0 }
+.corner.b { align-items: flex-end; text-align: right }
+.corner h3 { font: italic 800 clamp(1.2rem, 4vw, 1.9rem)/1.05 var(--display); text-transform: uppercase }
+.corner.r h3 { border-bottom: 4px solid var(--red); padding-bottom: 4px }
+.corner.b h3 { border-bottom: 4px solid var(--blue); padding-bottom: 4px }
+.vs { font: italic 800 1.6rem var(--display); color: var(--ufc-red) }
+.mirror { display: grid; gap: 12px; margin-top: 10px }
+.mrow { display: grid; grid-template-columns: 4em 1fr 4em; gap: 8px; align-items: center }
+.mrow .label { grid-column: 1 / -1; text-align: center; font: 700 .78rem var(--display); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin-bottom: -6px }
+.mrow .v { font: 800 1.1rem var(--display); font-variant-numeric: tabular-nums }
+.mrow .v:last-child { text-align: right }
+.mtrack { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 12px }
+.mtrack div { position: relative; background: var(--bar-track) }
+.mtrack i { position: absolute; top: 0; bottom: 0 }
+.mtrack div:first-child i { right: 0; background: var(--red); border-radius: 4px 0 0 4px }
+.mtrack div:last-child i { left: 0; background: var(--blue); border-radius: 0 4px 4px 0 }
+.legend { display: flex; gap: 16px; font-size: .9rem; color: var(--muted); flex-wrap: wrap }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: middle }
+
+.picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.picker .searchbox { flex: none }
+.picker label { display: block; font: 700 .8rem var(--display); text-transform: uppercase; letter-spacing: .14em; margin-bottom: 4px }
+.picker .r label { color: var(--red) } .picker .b label { color: var(--blue) }
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px }
+.tabs button { font: 700 .85rem var(--display); text-transform: uppercase; letter-spacing: .08em; padding: 6px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer }
+.tabs button:hover { color: var(--fg) }
+.tabs button[aria-pressed="true"] { background: var(--ufc-red); color: #fff; border-color: var(--ufc-red) }
+
+.btn { display: inline-block; font: italic 800 1rem var(--display); text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; background: var(--ufc-red); color: #fff; border: 0; text-decoration: none; margin-top: 18px; cursor: pointer }
+.btn:hover { background: #ec1b1b }
+
+/* gráficos svg */
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; margin-top: 6px }
+svg.chart .grid { stroke: var(--line); stroke-width: 1 }
+svg.chart .ax { fill: var(--muted); font: 600 11px var(--body) }
+svg.chart .quad { fill: var(--muted); font: italic 700 12px var(--display); text-transform: uppercase; letter-spacing: .08em; opacity: .8 }
+svg.chart .lbl { fill: var(--fg); font: 700 12px var(--body) }
+svg.chart .avgline { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4 }
+svg.chart .dot { fill: var(--accent); fill-opacity: .8; stroke: var(--bg); stroke-width: 1.5 }
+svg.chart .dot.hi { fill: var(--ufc-red); fill-opacity: 1; stroke: #fff; stroke-width: 2 }
+svg.chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round }
+svg.chart .pt { stroke: var(--bg); stroke-width: 2 }
+svg.chart .hit { cursor: pointer }
+svg.chart a:hover .dot { fill-opacity: 1; stroke: var(--fg) }
+svg.chart rect.col:hover { fill: rgb(255 255 255 / .04) }
+.note { font-size: .82rem; color: var(--muted); margin: 6px 0 0 }
+.tile em { display: block; font-style: normal; font-size: .78rem; color: var(--muted); margin-top: 4px; border-top: 1px solid var(--line); padding-top: 4px }
+.tile em.up { color: var(--win) } .tile em.down { color: var(--loss) }
+a.who { display: flex; align-items: center; gap: 10px }
+
+/* agenda */
+.upev { border: 1px solid var(--line); background: var(--panel); margin-top: 18px }
+.uphead { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; background: #000; text-decoration: none; border-left: 4px solid var(--ufc-red) }
+.uphead b { font: italic 800 1.2rem/1.1 var(--display); text-transform: uppercase }
+.uphead .date { font: 700 .85rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); white-space: nowrap }
+.upfight { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line) }
+.upfight .side { display: flex; align-items: center; gap: 10px; min-width: 0 }
+.upfight .side.b { justify-content: flex-end; text-align: right }
+.upfight .side > span:not(.avatar) { min-width: 0; display: flex; flex-direction: column; font-weight: 600 }
+.upfight .side a { text-decoration: none; overflow-wrap: break-word; hyphens: none }
+.upfight small { color: var(--muted); font-weight: 400; font-size: .8rem }
+.upfight .mid { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; max-width: 9em }
+.upfight .vs { font-size: 1rem }
+.upfight.main .vs { font-size: 1.5rem }
+.upfight.main .side > span:not(.avatar) { font: italic 800 1.15rem/1.1 var(--display); text-transform: uppercase }
+.mini { font: 700 .72rem var(--display); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); text-decoration: none; border: 1px solid var(--accent); padding: 1px 6px; margin-top: 4px }
+
+#tip { position: fixed; z-index: 50; pointer-events: none; background: #fff; color: #0b0b0c; padding: 6px 9px; font-size: .85rem; max-width: 260px; box-shadow: 0 4px 14px rgb(0 0 0 / .5) }
+footer { margin-top: 40px; font-size: .82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px }
+.loading { padding: 60px 0; text-align: center; color: var(--muted); font: italic 700 1.2rem var(--display); text-transform: uppercase; letter-spacing: .1em }
+
+@media (max-width: 860px) { .facts { grid-template-columns: repeat(3, 1fr) } }
+@media (max-width: 560px) {
+  .facts, .tiles { grid-template-columns: repeat(2, 1fr) }
+  .bar { grid-template-columns: 6.5em 1fr 4em }
+  .picker { grid-template-columns: 1fr }
+  .hide-sm { display: none }
+  nav.links { gap: 4px 12px; flex-wrap: wrap; font-size: .9rem }
+  .upfight { padding: 10px; gap: 6px } .upfight .avatar { display: none }
+  .upfight.main .side > span:not(.avatar) { font-size: 1rem }
+  .record small { display: block; margin: 6px 0 0 }
+  svg.chart .ax { font-size: 19px } svg.chart .quad { font-size: 18px } svg.chart .lbl { font-size: 21px }
+}
+@media (prefers-reduced-motion: no-preference) { .fill, .mtrack i { transition: width .3s ease } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#inicio"><b><span>Octógono</span></b>em Números</a>
+  <nav class="links"><a href="#inicio" data-nav="inicio">Início</a><a href="#agenda" data-nav="agenda">Agenda</a><a href="#eventos" data-nav="eventos">Eventos</a><a href="#divisoes" data-nav="divisoes">Divisões</a><a href="#comparar" data-nav="comparar">Comparar</a></nav>
+  <div class="searchbox" id="topsearch"></div>
+</div></header>
+
+<main class="wrap" id="app"><div class="loading">Carregando 30 anos de lutas…</div></main>
+<div id="tip" hidden></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const nf = (n, d = 0) => n == null || isNaN(n) ? "–" : n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = n => n == null || isNaN(n) ? "–" : nf(n * 100) + "%";
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const fmtDate = iso => iso ? new Date(iso + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "–";
+const age = (dob, at) => { if (!dob) return null; const a = new Date(at || Date.now()), b = new Date(dob); let y = a.getFullYear() - b.getFullYear(); if (a < new Date(a.getFullYear(), b.getMonth(), b.getDate())) y--; return y; };
+
+const WC = [["Women's ", "Feminino "], ["Light Heavyweight", "Peso-meio-pesado"], ["Super Heavyweight", "Peso-superpesado"], ["Heavyweight", "Peso-pesado"], ["Middleweight", "Peso-médio"], ["Welterweight", "Peso-meio-médio"], ["Lightweight", "Peso-leve"], ["Featherweight", "Peso-pena"], ["Bantamweight", "Peso-galo"], ["Flyweight", "Peso-mosca"], ["Strawweight", "Peso-palha"], ["Catch Weight", "Peso-casado"], ["Open Weight", "Peso aberto"], ["Interim ", "Interino "], ["Tournament", "Torneio"], ["Title", "(cinturão)"]];
+const wc = s => { let t = s; for (const [a, b] of WC) t = t.split(a).join(b); t = t.replace(/^Feminino (Peso-[\w-]+)/, "$1 feminino"); return t.replace(/^UFC /, ""); };
+const METHOD = [[/^Decision - Unanimous/, "Decisão unânime"], [/^Decision - Split/, "Decisão dividida"], [/^Decision - Majority/, "Decisão majoritária"], [/^KO\/TKO/, "KO/TKO"], [/^TKO - Doctor's Stoppage/, "TKO (médico)"], [/^Submission/, "Finalização"], [/^DQ/, "Desclassificação"], [/^Overturned/, "Resultado anulado"], [/^Could Not Continue/, "Não pôde continuar"], [/^Other/, "Outro"]];
+const method = s => { for (const [r, t] of METHOD) if (r.test(s)) return t; return s; };
+const RES = ["V", "D", "E", "SR"], RES_LONG = { V: "Vitória", D: "Derrota", E: "Empate", SR: "Sem resultado" };
+
+let D, F = {}, byNorm = [];
+
+/* ---------- derivações ---------- */
+function career(f) {
+  const c = f.c, min = c.sec / 60, q = c.sec / 900, s = c.s, o = c.o;
+  return {
+    slpm: min ? s[1] / min : null, sapm: min ? o[1] / min : null,
+    acc: s[2] ? s[1] / s[2] : null, def: o[2] ? 1 - o[1] / o[2] : null,
+    td15: q ? s[5] / q : null, tdacc: s[6] ? s[5] / s[6] : null, tddef: o[6] ? 1 - o[5] / o[6] : null,
+    sub15: q ? s[7] / q : null, kd: s[0], ctrl: c.statFights ? s[9] / c.statFights : null,
+    finishes: (c.winBy["KO/TKO"] || 0) + (c.winBy["Finalização"] || 0),
+  };
+}
+function resultFor(fx, fid) { const a = fx.a[1] === fid; let r = fx.res; if (!a && r < 2) r = 1 - r; return RES[r]; }
+function opp(fx, fid) { return fx.a[1] === fid ? fx.b : fx.a; }
+const initials = n => String(n || "?").split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+const avatar = (f, size = 36, cls = "") => `<span class="avatar ${cls}" style="--s:${size}px"${f && f.id ? ` data-id="${f.id}"` : ""} aria-hidden="true">${f && f.img ? `<img src="${esc(f.img)}" alt="" loading="lazy">` : initials(f ? f.name : "")}</span>`;
+const link = ([name, id]) => id ? `<a href="#f-${id}">${esc(name)}</a>` : esc(name);
+
+/* ---------- busca ---------- */
+function searchFighters(q, n = 8) {
+  const t = norm(q.trim()); if (t.length < 2) return [];
+  const out = [];
+  for (const [k, f] of byNorm) if (k.includes(t)) out.push(f);
+  out.sort((a, b) => (norm(b.name).startsWith(t) - norm(a.name).startsWith(t)) || b.fights.length - a.fights.length);
+  return out.slice(0, n);
+}
+function mountSearch(host, { placeholder = "Buscar lutador…", onPick, id }) {
+  host.innerHTML = `<input id="${id}" type="search" autocomplete="off" placeholder="${placeholder}" aria-label="${placeholder}"><div class="results" hidden></div>`;
+  const inp = $("input", host), box = $(".results", host); let items = [], sel = -1;
+  const draw = () => {
+    items = searchFighters(inp.value); sel = -1;
+    box.hidden = !items.length;
+    box.innerHTML = items.map((f, i) => `<a href="#f-${f.id}" data-i="${i}">${avatar(f, 32)}<span>${esc(f.name)}${f.nick ? ` <small>“${esc(f.nick)}”</small>` : ""}</span><small class="num">${f.c.W}-${f.c.L}${f.c.D ? "-" + f.c.D : ""}</small></a>`).join("");
+  };
+  const pick = f => { box.hidden = true; inp.value = onPick ? f.name : ""; inp.blur(); onPick ? onPick(f) : (location.hash = "f-" + f.id); };
+  inp.addEventListener("input", draw);
+  inp.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); sel = Math.max(0, Math.min(items.length - 1, sel + (e.key === "ArrowDown" ? 1 : -1))); [...box.children].forEach((a, i) => a.classList.toggle("sel", i === sel)); }
+    if (e.key === "Enter" && items.length) { e.preventDefault(); pick(items[Math.max(sel, 0)]); }
+    if (e.key === "Escape") box.hidden = true;
+  });
+  box.addEventListener("click", e => { const a = e.target.closest("a"); if (a) { e.preventDefault(); pick(items[+a.dataset.i]); } });
+  document.addEventListener("click", e => { if (!host.contains(e.target)) box.hidden = true; });
+  return inp;
+}
+
+/* ---------- gráficos ---------- */
+function bars(rows, { fmt = v => nf(v), max } = {}) {
+  const m = max ?? (Math.max(...rows.map(r => r.v), 0) || 1);
+  return `<div class="bars">${rows.map(r => `<div class="bar" data-tip="${esc(r.tip || "")}"><span>${r.label}</span><div class="track"><div class="fill" style="width:${(r.v / m) * 100}%"></div></div><span class="v">${fmt(r.v)}</span></div>`).join("")}</div>`;
+}
+function mirror(rows) {
+  return `<div class="mirror">${rows.map(r => {
+    const m = Math.max(r.a ?? 0, r.b ?? 0) || 1, f = r.fmt || (v => nf(v));
+    return `<div class="mrow" data-tip="${esc(r.label)}: ${esc(f(r.a))} × ${esc(f(r.b))}"><div class="label">${r.label}</div><span class="v">${f(r.a)}</span><div class="mtrack"><div><i style="width:${((r.a ?? 0) / m) * 100}%"></i></div><div><i style="width:${((r.b ?? 0) / m) * 100}%"></i></div></div><span class="v">${f(r.b)}</span></div>`;
+  }).join("")}</div>`;
+}
+const legend = (a, b) => `<div class="legend"><span><i style="background:var(--red)"></i>${esc(a)}</span><span><i style="background:var(--blue)"></i>${esc(b)}</span></div>`;
+
+/* ---------- páginas ---------- */
+let leaderKey = "wins";
+const LEADERS = {
+  wins: { t: "Vitórias", get: f => f.c.W },
+  finishes: { t: "Nocautes + finalizações", get: f => career(f).finishes },
+  kd: { t: "Knockdowns", get: f => f.c.s[0] },
+  td: { t: "Quedas", get: f => f.c.s[5] },
+  slpm: { t: "Golpes sig. por minuto", get: f => f.c.statFights >= 8 ? career(f).slpm : null, fmt: v => nf(v, 2), note: "mín. 8 lutas" },
+  titles: { t: "Lutas por cinturão", get: f => f.c.titleFights },
+};
+function pageHome() {
+  const recent = D.events.filter(e => e.fights.length).slice(0, 6);
+  const L = LEADERS[leaderKey];
+  const top = D.fighters.map(f => [f, L.get(f)]).filter(x => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  return `<section class="page"><div class="hero"><div class="hero-row"><div>
+    <div class="eyebrow gold">Dados até ${fmtDate(D.updated)}</div>
+    <h1>Estatísticas do UFC</h1>
+    <p class="muted" style="margin-bottom:0">${nf(D.fighters.length)} lutadores, ${nf(D.fights.length)} lutas e ${nf(D.events.length)} eventos desde 1993. Busque um lutador no topo ou explore abaixo.</p></div></div></div>
+    ${(D.upcoming || []).length ? `<h2>Próximo evento <small><a href="#agenda">ver agenda</a></small></h2>${upcomingCard(D.upcoming[0], false)}` : ""}
+    <div class="cols">
+      <div><h2>Últimos eventos <small><a href="#eventos">ver todos</a></small></h2>${evList(recent)}</div>
+      <div><h2>Recordes de carreira <small>${L.note || "no UFC"}</small></h2>
+        <div class="tabs" role="group" aria-label="Escolher recorde">${Object.entries(LEADERS).map(([k, v]) => `<button data-leader="${k}" aria-pressed="${k === leaderKey}">${v.t}</button>`).join("")}</div>
+        ${bars(top.map(([f, v]) => ({ label: `<a href="#f-${f.id}">${esc(f.name)}</a>`, v, tip: `${f.name}: ${L.fmt ? L.fmt(v) : v}` })), { fmt: L.fmt })}
+      </div>
+    </div></section>`;
+}
+function evList(evs) {
+  return `<div class="evlist">${evs.map(e => {
+    const main = D.fights[e.fights[0]];
+    return `<a href="#e-${e.id}"><span><b>${esc(e.name)}</b><br><small class="muted">${esc(e.loc)}${main ? " · " + esc(main.a[0]) + " × " + esc(main.b[0]) : ""}</small></span><span class="date num">${fmtDate(e.date)}</span></a>`;
+  }).join("")}</div>`;
+}
+let evShown = 40;
+function pageEvents() {
+  const evs = D.events.filter(e => e.fights.length);
+  return `<section class="page"><h1>Eventos</h1><p class="muted">${nf(evs.length)} eventos, do mais recente ao mais antigo.</p>
+    ${evList(evs.slice(0, evShown))}
+    ${evShown < evs.length ? `<button class="btn" id="more" style="background:none;color:var(--fg);cursor:pointer">Mostrar mais</button>` : ""}</section>`;
+}
+function pageEvent(id) {
+  const e = D.events.find(x => x.id === id); if (!e) return notFound();
+  return `<section class="page"><div class="hero"><div class="hero-row"><div><div class="eyebrow gold">${fmtDate(e.date)} · ${esc(e.loc)}</div><h1>${esc(e.name)}</h1></div></div></div>
+    <h2>Lutas <small>${e.fights.length} no card</small></h2>
+    <div class="tablewrap"><table><thead><tr><th>Vencedor</th><th>Perdedor</th><th class="hide-sm">Categoria</th><th>Método</th><th>Rd</th><th></th></tr></thead><tbody>
+    ${e.fights.map(i => { const x = D.fights[i]; const draw = x.res >= 2; const [w, l] = x.res === 1 ? [x.b, x.a] : [x.a, x.b];
+      return `<tr><td>${draw ? `<span class="pill r-${RES[x.res]}">${RES[x.res]}</span> ` : ""}<b>${link(w)}</b></td><td>${link(l)}</td><td class="hide-sm">${esc(wc(x.wc).replace(' (cinturão)', ''))}${x.wc.includes('Title') ? '<span class="belt">Cinturão</span>' : ''}</td><td>${esc(method(x.method))}</td><td class="num">${esc(x.rnd)} · ${esc(x.time)}</td><td><a href="#l-${x.id}">detalhes</a></td></tr>`; }).join("")}
+    </tbody></table></div></section>`;
+}
+function pageFighter(id) {
+  const f = F[id]; if (!f) return notFound();
+  const c = f.c, k = career(f), last = D.fights[f.fights[0]];
+  const rec = `${c.W}-${c.L}-${c.D}`;
+  const s = c.s, sigTot = s[10] + s[11] + s[12], posTot = s[13] + s[14] + s[15];
+  const methods = ["KO/TKO", "Finalização", "Decisão", "Outro"];
+  const hist = [...f.fights].reverse();
+  const dv = fighterDiv(f), DS = dv && divStats(dv), DA = DS && DS.avg;
+  return `<section class="page">
+    <div class="hero"><div class="hero-row">${avatar(f, 132)}<div>
+    <div class="eyebrow${last.wc.includes("Title") ? " gold" : ""}">${esc(wc(last.wc))}</div>
+    <h1>${esc(f.name)}</h1>${f.nick ? `<div class="nick">“${esc(f.nick)}”</div>` : ""}
+    <div class="record">${rec}<small>no UFC${c.NC ? ` · ${c.NC} sem resultado` : ""}</small></div></div></div></div>
+    <dl class="facts">
+      <div><dt>Idade</dt><dd>${f.dob ? age(f.dob) + " anos" : "–"}</dd></div>
+      <div><dt>Altura</dt><dd>${f.h ? f.h + " cm" : "–"}</dd></div>
+      <div><dt>Envergadura</dt><dd>${f.r ? f.r + " cm" : "–"}</dd></div>
+      <div><dt>Peso</dt><dd>${f.w ? nf(f.w, 1) + " kg" : "–"}</dd></div>
+      <div><dt>Base</dt><dd>${esc({ Orthodox: "Ortodoxa", Southpaw: "Canhota", Switch: "Troca base", "Open Stance": "Aberta", Sideways: "Lateral" }[f.stance] || f.stance || "–")}</dd></div>
+      <div><dt>Última luta</dt><dd>${fmtDate(f.last)}</dd></div>
+    </dl>
+    <h2>Histórico <small>mais antiga → mais recente</small></h2>
+    <div class="streak">${hist.map(i => { const x = D.fights[i], r = resultFor(x, id), o = opp(x, id); return `<a class="r-${r}" href="#l-${x.id}" data-tip="${RES_LONG[r]} contra ${esc(o[0])} · ${esc(method(x.method))} · ${fmtDate(D.events[x.ev].date)}" aria-label="${RES_LONG[r]} contra ${esc(o[0])}">${r}</a>`; }).join("")}</div>
+    <h2>Estatísticas de carreira <small>${c.statFights} lutas com dados</small></h2>
+    <div class="tiles">
+      ${[["slpm", "golpes sig. acertados por minuto", v => nf(v, 2), 1], ["sapm", "golpes sig. sofridos por minuto", v => nf(v, 2), -1],
+         ["acc", "precisão nos golpes", pct, 1], ["def", "defesa de golpes", pct, 1], ["td15", "quedas a cada 15 min", v => nf(v, 2), 1],
+         ["tdacc", "aproveitamento de quedas", pct, 1], ["tddef", "defesa de quedas", pct, 1], ["ctrl", "controle médio por luta", v => v == null ? "–" : mmss(v), 1]]
+        .map(([key, label, fmt, dir]) => { const v = k[key], a = DA && DA[key];
+          const cls = v == null || a == null ? "" : Math.abs(v - a) / (a || 1) < .05 ? "" : (v > a) === (dir > 0) ? "up" : "down";
+          return `<div class="tile"><b>${fmt(v)}</b><span>${label}</span>${a != null ? `<em class="${cls}">média da divisão: ${fmt(a)}</em>` : ""}</div>`; }).join("")}
+    </div>
+    ${dv ? `<p class="note">Comparado com a média dos lutadores ativos do ${esc(DIV_NAME[dv].toLowerCase())}. Verde é melhor que a média, vermelho é pior.</p>` : ""}
+    <h2>Luta a luta <small>golpes significativos por minuto</small></h2>${fightByFight(f)}
+    ${dv ? `<h2>Na divisão <small>${esc(DIV_NAME[dv])} · <a href="#divisoes" data-div="${dv}">ver divisão</a></small></h2>${strikeMap(DS.act.some(a => a.f.id === f.id) ? DS.act : [...DS.act, { f, k }], DS.avg, f.id)}` : ""}
+    <div class="cols">
+      <div><h2>Como vence <small>${c.W} vitórias</small></h2>${bars(methods.map(m => ({ label: m, v: c.winBy[m] || 0, tip: `${m}: ${c.winBy[m] || 0} vitórias` })), { max: Math.max(c.W, 1) })}
+        <h2>Como perde <small>${c.L} derrotas</small></h2>${bars(methods.map(m => ({ label: m, v: c.lossBy[m] || 0, tip: `${m}: ${c.lossBy[m] || 0} derrotas` })), { max: Math.max(c.W, c.L, 1) })}</div>
+      <div><h2>Onde acerta <small>golpes significativos</small></h2>${bars([["Cabeça", s[10]], ["Corpo", s[11]], ["Pernas", s[12]]].map(([l, v]) => ({ label: l, v: sigTot ? v / sigTot : 0, tip: `${l}: ${nf(v)} golpes` })), { fmt: pct, max: 1 })}
+        <h2>De onde acerta</h2>${bars([["Distância", s[13]], ["Clinch", s[14]], ["Solo", s[15]]].map(([l, v]) => ({ label: l, v: posTot ? v / posTot : 0, tip: `${l}: ${nf(v)} golpes` })), { fmt: pct, max: 1 })}</div>
+    </div>
+    <a class="btn" href="#comparar" data-compare="${id}">Comparar com outro lutador</a>
+    <h2>Lutas no UFC</h2>
+    <div class="tablewrap"><table><thead><tr><th></th><th>Adversário</th><th>Método</th><th>Rd</th><th class="hide-sm">Evento</th><th>Data</th></tr></thead><tbody>
+    ${f.fights.map(i => { const x = D.fights[i], r = resultFor(x, id); return `<tr><td><a class="pill r-${r}" href="#l-${x.id}" title="${RES_LONG[r]}">${r}</a></td><td>${link(opp(x, id))}${x.wc.includes("Title") ? `<span class="belt">Cinturão</span>` : ""}</td><td>${esc(method(x.method))}</td><td class="num">${esc(x.rnd)} · ${esc(x.time)}</td><td class="hide-sm"><a href="#e-${D.events[x.ev].id}">${esc(D.events[x.ev].name)}</a></td><td class="num" style="white-space:nowrap">${fmtDate(D.events[x.ev].date)}</td></tr>`; }).join("")}
+    </tbody></table></div></section>`;
+}
+function pageFight(id) {
+  const x = D.fights.find(f => f.id === id); if (!x) return notFound();
+  const e = D.events[x.ev], a = x.sa, b = x.sb;
+  const res = x.res === 0 ? `Vitória de ${esc(x.a[0])}` : x.res === 1 ? `Vitória de ${esc(x.b[0])}` : x.res === 2 ? "Empate" : "Sem resultado";
+  const sec = x.sec / 60;
+  const row = (label, i, fmt) => ({ label, a: a?.[i], b: b?.[i], fmt });
+  return `<section class="page"><div class="eyebrow"><a href="#e-${e.id}">${esc(e.name)}</a> · ${fmtDate(e.date)}</div>
+    <div class="corners"><div class="corner r">${avatar(F[x.a[1]] || { name: x.a[0] }, 84, "r")}<div class="eyebrow">Canto vermelho</div><h3>${link(x.a)}</h3></div><div class="vs">VS</div><div class="corner b">${avatar(F[x.b[1]] || { name: x.b[0] }, 84, "b")}<div class="eyebrow">Canto azul</div><h3>${link(x.b)}</h3></div></div>
+    <dl class="facts"><div><dt>Resultado</dt><dd>${res}</dd></div><div><dt>Método</dt><dd>${esc(method(x.method))}</dd></div><div><dt>Round / tempo</dt><dd>${esc(x.rnd)} · ${esc(x.time)}</dd></div><div><dt>Categoria</dt><dd>${esc(wc(x.wc))}</dd></div><div><dt>Árbitro</dt><dd>${esc(x.ref || "–")}</dd></div><div><dt>Duração</dt><dd>${nf(sec, 1)} min</dd></div></dl>
+    ${a && b ? `<h2>Números da luta</h2>${legend(x.a[0], x.b[0])}${mirror([
+      row("Knockdowns", 0), row("Golpes significativos", 1), row("Golpes totais", 3), row("Quedas", 5), row("Tentativas de finalização", 7), { label: "Tempo de controle", a: a[9], b: b[9], fmt: mmss },
+      row("Na cabeça", 10), row("No corpo", 11), row("Nas pernas", 12), row("À distância", 13), row("No clinch", 14), row("No solo", 15)])}
+      <p class="muted" style="font-size:.85rem">Precisão: ${esc(x.a[0])} ${pct(a[1] / a[2])} (${a[1]} de ${a[2]}) · ${esc(x.b[0])} ${pct(b[1] / b[2])} (${b[1]} de ${b[2]})</p>` : `<p class="muted">Sem estatísticas detalhadas para esta luta.</p>`}
+  </section>`;
+}
+let cmp = [null, null];
+function pageCompare() {
+  const [A, B] = cmp.map(id => id && F[id]);
+  let body = `<p class="muted">Escolha dois lutadores para ver os números de carreira lado a lado.</p>`;
+  if (A && B) {
+    const a = career(A), b = career(B);
+    const r = (label, x, y, fmt) => ({ label, a: x, b: y, fmt });
+    body = `<div class="corners" style="margin-bottom:20px"><div class="corner r">${avatar(A, 84, "r")}<h3>${link([A.name, A.id])}</h3></div><div class="vs">VS</div><div class="corner b">${avatar(B, 84, "b")}<h3>${link([B.name, B.id])}</h3></div></div>${legend(A.name, B.name)}${mirror([
+      r("Vitórias no UFC", A.c.W, B.c.W), r("Derrotas no UFC", A.c.L, B.c.L), r("Nocautes + finalizações", a.finishes, b.finishes),
+      r("Golpes sig. por minuto", a.slpm, b.slpm, v => nf(v, 2)), r("Golpes sig. sofridos por minuto", a.sapm, b.sapm, v => nf(v, 2)),
+      r("Precisão nos golpes", a.acc, b.acc, pct), r("Defesa de golpes", a.def, b.def, pct),
+      r("Quedas a cada 15 min", a.td15, b.td15, v => nf(v, 2)), r("Defesa de quedas", a.tddef, b.tddef, pct),
+      r("Finalizações tentadas a cada 15 min", a.sub15, b.sub15, v => nf(v, 2)), r("Knockdowns na carreira", a.kd, b.kd),
+      r("Altura (cm)", A.h, B.h), r("Envergadura (cm)", A.r, B.r), r("Idade", age(A.dob), age(B.dob))])}
+      ${(() => { const met = D.fights.filter(x => (x.a[1] === A.id && x.b[1] === B.id) || (x.a[1] === B.id && x.b[1] === A.id)); return met.length ? `<h2>Já se enfrentaram</h2><div class="evlist">${met.map(x => `<a href="#l-${x.id}"><span><b>${(resultFor(x, A.id) === "V" ? esc(A.name) + "</b> venceu" : resultFor(x, A.id) === "D" ? esc(B.name) + "</b> venceu" : "Sem vencedor</b>")} · ${esc(method(x.method))}</span><small class="muted">${fmtDate(D.events[x.ev].date)}</small></a>`).join("")}</div>` : ""; })()}`;
+  }
+  return `<section class="page"><h1>Comparar lutadores</h1>
+    <div class="picker" style="margin-top:16px"><div class="r"><label for="cmpA">Canto vermelho</label><div class="searchbox" id="pa"></div></div><div class="b"><label for="cmpB">Canto azul</label><div class="searchbox" id="pb"></div></div></div>
+    <div style="margin-top:20px">${body}</div></section>`;
+}
+/* ---------- divisões ---------- */
+const DIVS = [
+  ["Flyweight", "Peso-mosca"], ["Bantamweight", "Peso-galo"], ["Featherweight", "Peso-pena"], ["Lightweight", "Peso-leve"],
+  ["Welterweight", "Peso-meio-médio"], ["Middleweight", "Peso-médio"], ["Light Heavyweight", "Peso-meio-pesado"], ["Heavyweight", "Peso-pesado"],
+  ["W-Strawweight", "Palha feminino"], ["W-Flyweight", "Mosca feminino"], ["W-Bantamweight", "Galo feminino"], ["W-Featherweight", "Pena feminino"]];
+const DIV_NAME = Object.fromEntries(DIVS);
+function divKey(w) {
+  const wm = /Women's (Strawweight|Flyweight|Bantamweight|Featherweight)/.exec(w); if (wm) return "W-" + wm[1];
+  for (const k of ["Light Heavyweight", "Heavyweight", "Flyweight", "Bantamweight", "Featherweight", "Lightweight", "Welterweight", "Middleweight"])
+    if (w.includes(k) && !w.includes("Super Heavyweight")) return k;
+  return null;
+}
+const SINCE = "2010-01-01";
+const yearsAgo = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); };
+const evDate = x => D.events[x.ev].date || "";
+const mgroup = m => /KO/.test(m) ? 0 : /Submission/.test(m) ? 1 : /Decision/.test(m) ? 2 : 3;
+const MG = ["KO/TKO", "Finalização", "Decisão"], MGC = ["var(--c1)", "var(--c2)", "var(--c3)"];
+
+let DIVCACHE = {};
+function divStats(key) {
+  if (DIVCACHE[key]) return DIVCACHE[key];
+  const fights = D.fights.filter(x => divKey(x.wc) === key);
+  const recent = fights.filter(x => evDate(x) >= SINCE);
+  const cutoff = yearsAgo(D.updated, 2);
+  const roster = D.fighters.filter(f => f.last >= cutoff && divKey(D.fights[f.fights[0]].wc) === key);
+  // ano a ano
+  const byYear = {};
+  for (const x of recent) { const y = evDate(x).slice(0, 4); const g = mgroup(x.method); if (g === 3) continue; (byYear[y] ??= [0, 0, 0])[g]++; }
+  // médias da divisão (lutas desde 2010)
+  let sec = 0, sig = 0, td = 0, fin = 0;
+  for (const x of recent) if (x.sa && x.sb) { sec += x.sec; sig += x.sa[1] + x.sb[1]; td += x.sa[5] + x.sb[5]; }
+  for (const x of recent) if (mgroup(x.method) < 2) fin++;
+  const withStats = recent.filter(x => x.sa && x.sb).length;
+  const act = roster.filter(f => f.c.statFights >= 3).map(f => ({ f, k: career(f) }));
+  const mean = key2 => { const v = act.map(a => a.k[key2]).filter(v => v != null && isFinite(v)); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const avg = { slpm: mean("slpm"), sapm: mean("sapm"), acc: mean("acc"), def: mean("def"), td15: mean("td15"), tdacc: mean("tdacc"), tddef: mean("tddef"), ctrl: mean("ctrl") };
+  return DIVCACHE[key] = {
+    fights, recent, roster, act, byYear, avg,
+    finishRate: recent.length ? fin / recent.length : null,
+    avgMin: withStats ? sec / withStats / 60 : null,
+    sigPerMin: sec ? sig / (sec / 60) / 2 : null,   // por lutador
+    tdPer15: sec ? td / (sec / 900) / 2 : null,
+  };
+}
+const fighterDiv = f => divKey(D.fights[f.fights[0]].wc);
+
+/* ---------- gráficos em SVG ---------- */
+const niceMax = v => { if (!(v > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p; return 10 * p; };
+const ticks = (max, n = 4) => Array.from({ length: n + 1 }, (_, i) => max * i / n);
+const svgLegend = items => `<div class="legend">${items.map(([c, t, line]) => `<span><i style="background:${c}${line ? ";height:3px;width:14px" : ""}"></i>${esc(t)}</span>`).join("")}</div>`;
+
+// colunas 100% empilhadas: como as lutas terminam, ano a ano
+function methodColumns(byYear) {
+  const years = Object.keys(byYear).sort(); if (!years.length) return `<p class="muted">Sem lutas suficientes.</p>`;
+  const W = 640, H = 240, L = 34, R = 6, T = 8, B = 26, cw = (W - L - R) / years.length, bw = Math.max(6, Math.min(28, cw - 6));
+  let g = "";
+  for (const t of [0, .25, .5, .75, 1]) { const y = T + (H - T - B) * (1 - t); g += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" class="grid"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" class="ax">${t * 100}%</text>`; }
+  years.forEach((yr, i) => {
+    const v = byYear[yr], n = v[0] + v[1] + v[2], x = L + i * cw + (cw - bw) / 2; let y0 = H - B;
+    const tip = `${yr} · ${n} lutas — KO/TKO ${pct(v[0] / n)}, Finalização ${pct(v[1] / n)}, Decisão ${pct(v[2] / n)}`;
+    v.forEach((c, j) => { const h = (H - T - B) * c / n; if (h <= 0) return; y0 -= h; g += `<rect x="${x}" y="${y0}" width="${bw}" height="${Math.max(h - 2, 0.5)}" fill="${MGC[j]}"/>`; });
+    g += `<rect x="${L + i * cw}" y="${T}" width="${cw}" height="${H - T - B}" fill="transparent" class="hit" data-tip="${esc(tip)}"/>`;
+    if (years.length <= 12 || i % 2 === 0 || i === years.length - 1) g += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" class="ax">’${yr.slice(2)}</text>`;
+  });
+  return `${svgLegend(MG.map((t, i) => [MGC[i], t]))}<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Como as lutas terminam, ano a ano">${g}</svg>`;
+}
+
+// dispersão: golpes acertados x sofridos por minuto
+function strikeMap(act, avg, highlight) {
+  if (act.length < 3) return `<p class="muted">Poucos lutadores ativos com dados.</p>`;
+  const pts = act.filter(a => a.k.slpm != null && a.k.sapm != null);
+  const W = 640, H = 380, L = 40, R = 12, T = 12, B = 34;
+  const xm = niceMax(Math.max(...pts.map(a => a.k.slpm)) * 1.05), ym = niceMax(Math.max(...pts.map(a => a.k.sapm)) * 1.05);
+  const X = v => L + (W - L - R) * v / xm, Y = v => H - B - (H - T - B) * v / ym;
+  let g = "";
+  for (const t of ticks(xm)) g += `<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H - B}" class="grid"/><text x="${X(t)}" y="${H - B + 16}" text-anchor="middle" class="ax">${nf(t, t % 1 ? 1 : 0)}</text>`;
+  for (const t of ticks(ym)) g += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" class="grid"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" class="ax">${nf(t, t % 1 ? 1 : 0)}</text>`;
+  g += `<text x="${W - R}" y="${H - 4}" text-anchor="end" class="ax">acerta por minuto →</text><text x="${L + 4}" y="${T + 10}" class="ax">↑ sofre por minuto</text>`;
+  if (avg.slpm != null) g += `<line x1="${X(avg.slpm)}" x2="${X(avg.slpm)}" y1="${T}" y2="${H - B}" class="avgline"/><line x1="${L}" x2="${W - R}" y1="${Y(avg.sapm)}" y2="${Y(avg.sapm)}" class="avgline"/>`;
+  g += `<text x="${W - R - 4}" y="${H - B - 8}" text-anchor="end" class="quad">Bate muito, apanha pouco</text><text x="${L + 6}" y="${T + 28}" class="quad">Bate pouco, apanha muito</text>`;
+  const sorted = [...pts].sort((a, b) => (a.f.id === highlight) - (b.f.id === highlight));
+  for (const a of sorted) {
+    const hi = a.f.id === highlight, cx = X(a.k.slpm), cy = Y(a.k.sapm);
+    g += `<a href="#f-${a.f.id}"><circle cx="${cx}" cy="${cy}" r="${hi ? 8 : 5}" class="${hi ? "dot hi" : "dot"}"/><circle cx="${cx}" cy="${cy}" r="12" fill="transparent" class="hit" data-tip="${esc(`${a.f.name} (${a.f.c.W}-${a.f.c.L}) — acerta ${nf(a.k.slpm, 2)}/min, sofre ${nf(a.k.sapm, 2)}/min`)}"/></a>`;
+    if (hi) g += `<text x="${cx + 12}" y="${cy + 4}" class="lbl">${esc(a.f.name)}</text>`;
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de trocação da divisão">${g}</svg>
+    <p class="note">Cada ponto é um lutador ativo (lutou nos últimos 2 anos). As linhas tracejadas são a média da divisão. Toque num ponto para abrir o perfil.</p>`;
+}
+
+// linha luta a luta: golpes sig. por minuto acertados x sofridos
+function fightByFight(f) {
+  const rows = [...f.fights].reverse().map(i => D.fights[i]).filter(x => x.sa && x.sb && x.sec > 0).map(x => {
+    const me = x.a[1] === f.id, m = me ? x.sa : x.sb, o = me ? x.sb : x.sa, min = x.sec / 60;
+    return { x, l: m[1] / min, s: o[1] / min, r: resultFor(x, f.id), opp: opp(x, f.id)[0], d: evDate(x) };
+  });
+  if (rows.length < 2) return `<p class="muted">Poucas lutas com estatísticas para mostrar a evolução.</p>`;
+  const W = 640, H = 230, L = 34, R = 10, T = 10, B = 26, n = rows.length;
+  const ym = niceMax(Math.max(...rows.map(r => Math.max(r.l, r.s))) * 1.05);
+  const X = i => L + (W - L - R) * (n === 1 ? .5 : i / (n - 1)), Y = v => H - B - (H - T - B) * v / ym;
+  let g = "";
+  for (const t of ticks(ym)) g += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" class="grid"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" class="ax">${nf(t, t % 1 ? 1 : 0)}</text>`;
+  let lastYear = "";
+  rows.forEach((r, i) => { const y = r.d.slice(0, 4); if (y !== lastYear && (i === 0 || X(i) - X(rows.findIndex(q => q.d.slice(0, 4) === lastYear)) > 34)) { g += `<text x="${X(i)}" y="${H - 8}" text-anchor="middle" class="ax">${y}</text>`; } if (y !== lastYear) lastYear = y; });
+  const path = k => rows.map((r, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(r[k]).toFixed(1)}`).join("");
+  g += `<path d="${path("s")}" class="ln" style="stroke:var(--c2)"/><path d="${path("l")}" class="ln" style="stroke:var(--c1)"/>`;
+  const cw = (W - L - R) / Math.max(n - 1, 1);
+  rows.forEach((r, i) => {
+    g += `<circle cx="${X(i)}" cy="${Y(r.s)}" r="4" class="pt" style="fill:var(--c2)"/><circle cx="${X(i)}" cy="${Y(r.l)}" r="4" class="pt" style="fill:var(--c1)"/>`;
+    g += `<rect x="${X(i) - cw / 2}" y="${T}" width="${cw}" height="${H - T - B}" fill="transparent" class="hit col" data-tip="${esc(`${RES_LONG[r.r]} contra ${r.opp} · ${fmtDate(r.d)} — acertou ${nf(r.l, 1)}/min, sofreu ${nf(r.s, 1)}/min`)}"/>`;
+  });
+  return `${svgLegend([["var(--c1)", "Golpes sig. acertados por minuto", 1], ["var(--c2)", "Golpes sig. sofridos por minuto", 1]])}<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Golpes por minuto, luta a luta">${g}</svg>`;
+}
+
+/* ---------- página de divisões ---------- */
+let divSel = "Lightweight";
+function pageDivisions() {
+  const S = divStats(divSel), name = DIV_NAME[divSel];
+  const top = [...S.roster].sort((a, b) => b.c.W - a.c.W || a.c.L - b.c.L).slice(0, 10);
+  const tf = S.fights.find(x => x.wc.includes("Title") && x.res < 2), champs = tf && (tf.res === 0 ? tf.a : tf.b);
+  return `<section class="page"><div class="hero"><div class="hero-row"><div>
+    <div class="eyebrow gold">Divisões</div><h1>${esc(name)}</h1>
+    <p class="muted" style="margin-bottom:0">${nf(S.roster.length)} lutadores ativos · ${nf(S.recent.length)} lutas desde 2010${champs ? ` · último a vencer luta de cinturão: ${link(champs)}` : ""}</p></div></div></div>
+    <div class="tabs divtabs" role="group" aria-label="Escolher divisão" style="margin-top:18px">${DIVS.map(([k, t]) => `<button data-div="${k}" aria-pressed="${k === divSel}">${t}</button>`).join("")}</div>
+    <div class="tiles">
+      <div class="tile"><b>${pct(S.finishRate)}</b><span>das lutas terminam antes da decisão</span></div>
+      <div class="tile"><b>${nf(S.avgMin, 1)}</b><span>minutos de duração média</span></div>
+      <div class="tile"><b>${nf(S.sigPerMin, 2)}</b><span>golpes sig. por minuto, por lutador</span></div>
+      <div class="tile"><b>${nf(S.tdPer15, 2)}</b><span>quedas a cada 15 min, por lutador</span></div>
+    </div>
+    <h2>Como as lutas terminam <small>ano a ano, desde 2010</small></h2>${methodColumns(S.byYear)}
+    <h2>Mapa de trocação <small>lutadores ativos</small></h2>${strikeMap(S.act, S.avg)}
+    <h2>Destaques ativos <small>mais vitórias no UFC</small></h2>
+    <div class="tablewrap"><table><thead><tr><th>Lutador</th><th>Cartel</th><th>Finaliza</th><th class="hide-sm">Acerta/min</th><th class="hide-sm">Defesa de quedas</th></tr></thead><tbody>
+    ${top.map(f => { const k = career(f); return `<tr><td><a href="#f-${f.id}" class="who">${avatar(f, 30)}<span>${esc(f.name)}</span></a></td><td class="num">${f.c.W}-${f.c.L}${f.c.D ? "-" + f.c.D : ""}</td><td class="num">${pct(f.c.W ? k.finishes / f.c.W : null)}</td><td class="num hide-sm">${nf(k.slpm, 2)}</td><td class="num hide-sm">${pct(k.tddef)}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <p class="note">“Finaliza” é a parte das vitórias por nocaute ou finalização.</p></section>`;
+}
+
+/* ---------- agenda (próximos eventos) ---------- */
+function recordOf(p) { const f = p[1] && F[p[1]]; return f ? `${f.c.W}-${f.c.L}${f.c.D ? "-" + f.c.D : ""}` : "estreia"; }
+function upcomingCard(e, full) {
+  const fights = full ? e.fights : e.fights.slice(0, 1);
+  return `<div class="upev"><a class="uphead" href="#agenda"><span><b>${esc(e.name)}</b><br><small class="muted">${esc(e.loc)}</small></span><span class="date num">${fmtDate(e.date)}</span></a>
+    ${fights.map((x, i) => `<div class="upfight${i === 0 ? " main" : ""}">
+      <span class="side r">${avatar(x.a[1] && F[x.a[1]] || { name: x.a[0] }, i === 0 ? 56 : 36, "r")}<span>${link(x.a)}<small class="num">${recordOf(x.a)}</small></span></span>
+      <span class="mid"><span class="vs">VS</span><small>${esc(wc(x.wc || "").replace(" Bout", "")) || ""}</small>${x.a[1] && x.b[1] ? `<a class="mini" href="#comparar" data-cmp="${x.a[1]},${x.b[1]}">comparar</a>` : ""}</span>
+      <span class="side b"><span>${link(x.b)}<small class="num">${recordOf(x.b)}</small></span>${avatar(x.b[1] && F[x.b[1]] || { name: x.b[0] }, i === 0 ? 56 : 36, "b")}</span></div>`).join("")}</div>`;
+}
+function pageAgenda() {
+  const up = D.upcoming || [];
+  return `<section class="page"><div class="hero"><div class="hero-row"><div><div class="eyebrow gold">Agenda</div><h1>Próximos eventos</h1>
+    <p class="muted" style="margin-bottom:0">Cards anunciados no UFC Stats. Toque em “comparar” para ver os dois lutadores lado a lado.</p></div></div></div>
+    ${up.length ? up.map(e => upcomingCard(e, true)).join("") : `<p class="muted" style="margin-top:20px">Os próximos eventos aparecem aqui depois da próxima atualização automática dos dados.</p>`}</section>`;
+}
+
+const notFound = () => `<section class="page"><h1>Página não encontrada</h1><p><a href="#inicio">Voltar ao início</a></p></section>`;
+
+/* ---------- roteamento ---------- */
+function route() {
+  const h = location.hash.slice(1) || "inicio", app = $("#app");
+  const [kind, ...rest] = h.split("-"), id = rest.join("-");
+  const nav = { inicio: "inicio", eventos: "eventos", e: "eventos", comparar: "comparar", agenda: "agenda", divisoes: "divisoes" }[kind] || "";
+  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === nav));
+  app.innerHTML = kind === "f" ? pageFighter(id) : kind === "e" ? pageEvent(id) : kind === "l" ? pageFight(id)
+    : kind === "eventos" ? pageEvents() : kind === "comparar" ? pageCompare() : kind === "agenda" ? pageAgenda() : kind === "divisoes" ? pageDivisions() : pageHome();
+  if (kind === "comparar") {
+    const ia = mountSearch($("#pa"), { id: "cmpA", placeholder: "Primeiro lutador", onPick: f => { cmp[0] = f.id; route(); } });
+    const ib = mountSearch($("#pb"), { id: "cmpB", placeholder: "Segundo lutador", onPick: f => { cmp[1] = f.id; route(); } });
+    if (cmp[0]) ia.value = F[cmp[0]].name; if (cmp[1]) ib.value = F[cmp[1]].name;
+  }
+  if (!route.keepScroll) window.scrollTo(0, 0);
+  route.keepScroll = false;
+}
+document.addEventListener("click", e => {
+  const lb = e.target.closest("[data-leader]"); if (lb) { leaderKey = lb.dataset.leader; route.keepScroll = true; route(); return; }
+  if (e.target.id === "more") { evShown += 60; route.keepScroll = true; route(); return; }
+  const c = e.target.closest("[data-compare]"); if (c) { cmp = [c.dataset.compare, null]; }
+  const dv = e.target.closest("[data-div]"); if (dv) { divSel = dv.dataset.div; route.keepScroll = true; route(); return; }
+  const cc = e.target.closest("[data-cmp]"); if (cc) { cmp = cc.dataset.cmp.split(","); }
+});
+
+/* ---------- dica ao passar o mouse / tocar ---------- */
+const tip = $("#tip");
+function showTip(el, x, y) {
+  const t = el.dataset.tip; if (!t) return;
+  tip.textContent = t; tip.hidden = false;
+  const w = tip.offsetWidth, hgt = tip.offsetHeight;
+  tip.style.left = Math.min(Math.max(8, x - w / 2), innerWidth - w - 8) + "px";
+  tip.style.top = (y - hgt - 12 < 8 ? y + 18 : y - hgt - 12) + "px";
+}
+document.addEventListener("pointermove", e => { const el = e.target.closest("[data-tip]"); el && e.pointerType === "mouse" ? showTip(el, e.clientX, e.clientY) : (e.pointerType === "mouse" && (tip.hidden = true)); });
+document.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") return; const el = e.target.closest("[data-tip]"); el && !el.closest("a") ? showTip(el, e.clientX, e.clientY) : (tip.hidden = true); });
+addEventListener("scroll", () => tip.hidden = true, { passive: true });
+
+/* ---------- carga ---------- */
+fetch("data.json").then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+  D = d;
+  for (const f of D.fighters) { F[f.id] = f; byNorm.push([norm(f.name + " " + (f.nick || "")), f]); }
+  mountSearch($("#topsearch"), { id: "busca" });
+  addEventListener("hashchange", route);
+  route();
+  // fotos (ufc.com) chegam depois dos dados; troca as iniciais já desenhadas
+  fetch("photos.json").then(r => r.ok ? r.json() : {}).then(P => {
+    for (const id in P) if (F[id]) F[id].img = P[id];
+    for (const el of document.querySelectorAll(".avatar[data-id]")) { const f = F[el.dataset.id]; if (f && f.img && !el.querySelector("img")) el.innerHTML = `<img src="${f.img}" alt="">`; }
+  }).catch(() => {});
+}).catch(err => { $("#app").innerHTML = `<div class="loading">Não foi possível carregar os dados (${esc(err.message)}). Recarregue a página.</div>`; });
+</script>
+<footer class="wrap">Fonte: ufcstats.com, via o projeto aberto scrape_ufc_stats. Fotos: ufc.com. Recorde e estatísticas contam só lutas no UFC.</footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+__pycache__/
+scripts/fotos/raw/
+scripts/fotos/out/
+scripts/fotos/list.json
