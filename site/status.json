@@ -1,9 +1,9 @@
 {
- "gerado_em": "2026-10-11T22:30:31",
+ "gerado_em": "2026-10-13T01:00:08",
  "ultimo_evento": "2026-10-10",
  "lutas": 8935,
  "agenda": {
-  "ok": false,
-  "erro": "Command '['node', '/home/runner/work/octogono/octogono/scripts/fetch_html.js', 'http://ufcstats.com/statistics/events/upcoming']' returned non-zero exit status 1."
+  "ok": true,
+  "eventos": 7
  }
 }
